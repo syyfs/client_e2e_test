@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>科尔沁牛肉溯源信息</title>
+  <!-- start -->
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
+  />
+  <script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+  <!-- //For-Mobile-Apps-and-Meta-Tags -->
+  <!-- Custom Theme files -->
+  <link href="/global/css/bootstrap.min.css" type="text/css" rel="stylesheet" media="all">
+  <!-- Link Swiper's CSS -->
+  <link rel="stylesheet" href="/global/css/swiper.min.css"><!-- Swiper JS -->
+  <script src="/global/js/swiper.min.js"></script>
+  <script type='text/javascript' src='/global/js/jquery-2.2.3.min.js'></script>
+  <script src="/global/js/bootstrap.js"></script>
+  <style>
+    @media (min-width: 1024px) {
+      .container {
+        width: 720px;
+      }
+    }
+
+    /*>=1024的设备*/
+
+    @media (min-width: 1100px) {
+      .container {
+        width: 720px;
+      }
+    }
+
+    /*>=1100的设备*/
+
+    @media (min-width: 1280px) {
+      .container {
+        width: 720px;
+      }
+    }
+
+    /*>=1280的设备*/
+
+    @media (min-width: 768px) {
+      .container {
+        width: 720px;
+      }
+    }
+
+    @media (device-height:736px) and (-webkit-min-device-pixel-ratio:2) {
+      .container {
+        width: 100%;
+      }
+    }
+
+    @media (min-width: 411px) {
+      .container {
+        /* width: 100%; */
+        width: 720px;
+      }
+    }
+
+    * {
+        margin: 0;
+        padding: 0px;
+    }
+
+    body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        color: #333;
+        font-family: "微软雅黑";
+        font-weight: none;
+    }
+
+    ul li p h1 {
+        padding: 0;
+        margin: 0;
+    }
+
+    li {
+        list-style: none;
+    }
+
+    img {
+        max-width: 100%;
+        vertical-align: middle;
+        width: auto;
+    }
+
+    .flex-row {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .flex-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .container01 {
+        padding: 0 !important;
+    }
+
+    /* title */
+    .trace-title-container {
+      width: 100%;
+    }
+    .trace-title-img {
+      width: 40%;
+    }
+    .trace-title-detail {
+      width: 60%;
+      background-color: #8A9800;
+    }
+    .trace-title-img,
+    .trace-title-detail {
+      display: inline-block;
+      height: 7.5rem;
+      line-height: 7.5rem;
+    }
+    .trace-title-images {
+      width: 19.2rem;
+      display: inline-block;
+      height: 9rem;
+      vertical-align: middle;
+    }
+    .title-list {
+      display: block;
+      position: relative;
+      min-width: 92%;
+      margin: 1.188rem auto;
+    }
+    .title-list-txt {
+      display: block;
+      position: relative;
+      margin: 0.625rem;
+      height: 1.25rem;
+      line-height: 1.25rem;
+      font-size: 0.875rem;
+      color: #fff;
+    }
+
+    /* swiper */
+    .swiper-container {
+      width: 100%;
+      height: 100%;
+    }
+    .swiper-slide {
+      /* text-align: center;
+      font-size: 18px;
+      background: #fff; */
+   
+      /* Center slide text vertically */
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      -webkit-align-items: center;
+      align-items: center;
+
+      /* self css */
+      height: 10rem;
+      width: 100%;
+    }
+
+    .swiper-slide-bgImg{
+      position: relative;
+      height: 10rem;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .swiper-slide-p{
+        font-size: 0.875rem;
+        /* width: 100%; */
+        position: absolute;
+        top: 10%;
+        left: 20%;
+        line-height: 1.8rem;
+        color: #fff;
+    }
+
+    .swiper-button-next, .swiper-button-prev {
+      width: 15px !important;
+      height: 25px !important; 
+      background-size: 15px 25px !important;
+    }
+
+    /* item-list */
+
+    .item-list {
+        position: relative;
+        width: 100%;
+        height: auto;
+        padding: 2.2rem 0;
+        background-color: #F5FAF4;
+    }
+
+    .list-txt-color {
+        color: #939393;
+    }
+
+    .list-txt-img{
+      position: relative;
+      display: block;
+    }
+
+    .list-txt-imgLine{
+        height: 2rem;
+        display: inline-block;
+        margin-top: 1.8rem;
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+
+    .imgLine-span1,.imgLine-span2{
+        position: absolute;
+        display: inline-block;
+        font-size: 0.7rem;
+        min-width: 4.5rem;
+        line-height: 0.75rem;
+        color: #8A9800;
+    }
+    .imgLine-span1{
+        top: 0.9rem;
+        left: -9%;
+    }
+    .imgLine-span2{
+        bottom: -0.2rem;
+        right: -18%;
+    }
+
+    .item-list-block {
+        position: relative;
+        width: 96%;
+        margin: 0 auto;
+        justify-content: flex-start;
+    }
+
+    .list-block-time,
+    .list-block-axie,
+    .block-img-box {
+        margin-right: 0.8rem;
+    }
+
+    .list-block-time {
+        position: relative;
+        min-width: 24%;
+        text-align: right;
+        font-size: 0.75rem;
+        line-height: 1.3rem;
+        color: #333;
+    }
+
+    .list-block-axie {
+        position: relative;
+        min-width: 0.5rem;
+        align-items: center;
+    }
+
+    .axie-top {
+        margin-top: 0.35rem;
+    }
+
+    .axie-cicle {
+        display: inline-block;
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 0.225rem;
+        background-color: #D8D8D8;
+        margin-bottom: 0.15rem;
+    }
+
+    .axie-line {
+        display: inline-block;
+        width: 0.095rem;
+        height: 7.5rem;
+        background-color: #E6E6E6;
+    }
+
+    .add-axie-line{
+      height: 10.5rem !important;
+    }
+
+    .line01 {
+        height: 0.2rem !important;
+        margin-bottom: 0.15rem;
+    }
+
+    .block-img-box {
+        position: relative;
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-top: -0.3rem;
+    }
+
+    .block-img {
+        position: relative;
+        display: inline-block;
+    }
+
+    .list-block-status {
+        position: relative;
+        text-align: left;
+        font-size: 0.75rem;
+        line-height: 1.3rem;
+        color: #333;
+        min-width: 52%;
+        border-bottom: 1px solid #E6E6E6;
+        padding-bottom: 1.5rem;
+    }
+
+    /* item-report */
+
+    .item-report {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    .item-report-title {
+        text-align: center;
+        font-size: 0.875rem;
+        color: #333;
+        padding: 1.8rem 0 1.5rem 0;
+    }
+
+    .item-report-list {
+        justify-content: space-between;
+        width: 90%;
+        margin: 0 auto;
+        padding-bottom: 4rem;
+    }
+
+    .report-list-img {
+        position: relative;
+        width: 5.1rem;
+        height: 7.3rem;
+    }
+
+    /* images changes */
+    .changeImg {
+        width: 20.4rem;
+        height: 29.2rem;
+        position: relative;
+        margin: 1rem auto;
+        z-index: 5;
+        display: block;
+        margin-top: 10%;
+    }
+
+    .mengban {
+        width: 100%;
+        height: 100%;
+        /* height: 13.34rem; */
+        background: rgba(0, 0, 0, .5);
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container container01">
+    <div class='flex-row trace-title-container'>
+      <div class='trace-title-img'>
+        <img class='trace-title-images' src="/global/img/keqnr/beef.png" alt="">
+      </div>
+      <div class='trace-title-detail'>
+        <div class='title-list'>
+          <span class='title-list-txt'>商品名称：{{.data.traceInfo.goods_name}}</span>
+          <span class='title-list-txt'>商品编号：{{.data.traceInfo.goods_id}}</span>
+          <span class='title-list-txt'>批次编号：{{.data.traceInfo.batch_id}}</span>
+        </div>
+      </div>
+    </div>
+    <!-- swiper start -->
+    <div class="swiper-container">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <img class="swiper-slide-bgImg" src="/global/img/keqnr/swiper01.png" alt="">
+          <p class="swiper-slide-p">
+            品种：西门塔尔<br>口龄：3年<br>重量：320KG<br>耳标：201806240629<br>
+          </p>
+        </div>
+        <div class="swiper-slide">
+          <img class="swiper-slide-bgImg" src="/global/img/keqnr/swiper02.png" alt="">
+          <p class="swiper-slide-p">
+            养殖场：桑淑彬<br>养殖人：桑淑彬<br>责任兽医：王恒武<br>屠宰日期：2018-04-18<br>
+          </p>
+        </div>
+        <div class="swiper-slide">
+          <img class="swiper-slide-bgImg" src="/global/img/keqnr/swiper03.png" alt="">
+          <p class="swiper-slide-p">
+            打包产品：前片<br>产品重量：50KG<br>打包日期：2018-08-12<br>打包站点：201806240629<br>
+          </p>
+        </div>
+      </div>
+      <!-- Add Arrows -->
+      <div class="swiper-button-next swiper-button-white"></div>
+      <div class="swiper-button-prev swiper-button-white"></div>
+    </div>
+    <!-- swiper end -->
+    <!-- list start -->
+    <div class="item-list">
+      <div class="flex-row item-list-block">
+        <p class="list-block-time">今天
+        <br>
+        <span class="list-txt-color">16:48:12</span>
+        </p>
+        <div class="flex-column list-block-axie axie-top">
+        <!-- <span class="axie-line line01"></span> -->
+        <em class='axie-cicle'></em>
+        <span class="axie-line"></span>
+        </div>
+        <div class="block-img-box">
+        <img class="block-img" src="/global/img/xchz/out.png" alt="">
+        </div>
+        <p class="list-block-status">发货
+        <br>
+        <span class="list-txt-color">北京湘村高科生态农业有限公司</span>
+        <br>
+        <span class="list-txt-color">供应商编号001</span>
+        <br>
+        <span class="list-txt-color">发货人{{.data.delivery_person}}</span>
+        </p>
+      </div>
+      <div class="flex-row item-list-block">
+        <p class="list-block-time">2018-07-24<br>
+          <span class="list-txt-color">16:48:12</span>
+        </p>
+        <div class="flex-column list-block-axie">
+          <span class="axie-line line01"></span>
+          <em class='axie-cicle'></em>
+          <span class="axie-line add-axie-line"></span>
+        </div>
+        <div class="block-img-box">
+          <img class="block-img" src="/global/img/xchz/transport.png" alt="">
+        </div>
+        <p class="list-block-status status-add-line">运输
+        <br>
+        <span class="list-txt-color">公司配送，蒙G67387</span>
+        <br>
+        <span class="list-txt-color">运输人徐光灿，13984329510</span>
+        <span class="list-txt-img">
+          <img class="list-txt-imgLine" src="/global/img/keqnr/line.png" alt="">
+          <span class="imgLine-span1">科尔沁牛业仙品库</span>
+          <span class="imgLine-span2">上海市松江区九婷368号</span>
+        </span>
+        </p>
+      </div>
+      <div class="flex-row item-list-block">
+        <p class="list-block-time">2018-07-25<br><span class="list-txt-color">16:48:12</span>  
+          <!-- {{.data.delivery_time | formatAsDate}}<br>
+          <span class="list-txt-color">{{.data.delivery_time | formatAsTime}}</span> -->
+        </p>
+        <div class="flex-column list-block-axie">
+          <span class="axie-line line01"></span>
+          <em class='axie-cicle'></em>
+          <span class="axie-line"></span>
+        </div>
+        <div class="block-img-box">
+          <img class="block-img" src="/global/img/xchz/sail.png" alt="">
+        </div>
+        <p class="list-block-status">收货<br>
+          <span class="list-txt-color">{{.data.store_name}}</span><br>
+          <span class="list-txt-color">门店编号5b767f07655b31aa02</span>
+        </p>
+      </div>
+    </div>
+    <!-- list end -->
+    <!-- report start -->
+    <div class="item-report">
+      <h1 class="item-report-title">检疫报告</h1>
+      <div class="flex-row item-report-list">
+        <img class="report-list-img" src='/global/img/xchz/report.png' alt="">
+        <img class="report-list-img" src='/global/img/xchz/report.png' alt="">
+        <img class="report-list-img" src='/global/img/xchz/report.png' alt="">
+      <!-- {{if gt (len .data.examining_report.url) 0 }}
+        <img class="report-list-img" src={{.data.examining_report.url}} alt="">
+      {{end}}
+      {{if gt (len .data.quarantine_ticket1.url) 0 }}
+        <img class="report-list-img" src={{.data.quarantine_ticket1.url}} alt="">
+      {{end}}
+      {{if gt (len .data.quarantine_ticket2.url) 0 }}
+        <img class="report-list-img" src={{.data.quarantine_ticket2.url}} alt="">
+      {{end}} -->
+      </div>
+    </div>
+    <div class="mengban">
+      <!-- git -->
+      <div class="bigImg"></div>
+    </div>
+    <!-- report end -->
+  </div>  
+  <script>
+    var swiper = new Swiper('.swiper-container', {
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+    
+    $(document).ready(function () {
+      $('.report-list-img').click(function () {
+        var _height = $('.container01').height();
+        var src = $(this).attr('src')
+        $('.mengban').height(_height);
+        $('.mengban').show();
+        var html_string = '';
+        html_string += '<img src=" ' + src + ' " class="changeImg"/>';
+        $(".bigImg").append(html_string);
+        $('body,html').animate({
+          scrollTop: 0
+        }, 500);
+        $('.mengban').click(function () {
+          $('.mengban').hide();
+          $(".bigImg").html('');
+        });
+      })
+    })
+  </script>
+</body>
+</html>

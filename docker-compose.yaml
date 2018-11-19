@@ -1,0 +1,28 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+services:
+  backend:
+    container_name: ytrace
+    image: yonghui/ytrace
+    restart: always
+    ports:
+      - 8889:8889
+    environment:
+       - FABRIC_ARTIFACTS=/opt/ytrace
+       - GOPATH=/opt/gopath
+    extra_hosts:
+      - orderer.example.com:10.0.90.151
+      - peer0.jywy.trace.com:10.0.90.157
+      - peer0.yh.trace.cn:10.0.90.158
+      - peer0.zfjg.gov.cn:10.0.90.159
+      - peer1.jywy.trace.com:10.0.90.157
+      - peer1.yh.trace.cn:10.0.90.158
+      - peer1.zfjg.gov.cn:10.0.90.159
+    volumes:
+      - ./config/config.yaml:/opt/ytrace/config/config.yaml
+      - ./ytrace-log/:/opt/ytrace/log/

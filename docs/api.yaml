@@ -1,0 +1,400 @@
+swagger: '2.0'
+info:
+  description: fabric上层应用统一入口
+  version: 1.0.0
+  title: ytrace
+host: localhost:8889
+basePath: ''
+
+tags:
+  - name: '录入数据'
+    description: '录入数据统一接口，业务统一采用chaincode处理，通过调用不同的chaincode中不同的函数处理不同的业务，如：'
+  - name: '查询数据'
+    description: '查询数据接口，调用chaincode默认函数，获取对应的信息'
+schemes:
+  - http
+
+paths:
+  /asset/traceinfo2/putTraceInfo:
+    post:
+      summary: 调用hqcc4链码中putTraceInfo函数执行存储多宝鱼溯源信息的业务逻辑
+      operationId: asset_product_method_putTraceInfo
+      tags:
+        - '录入数据'
+      parameters:
+        - in: body
+          name: 请求参数
+          description: 多宝鱼溯源信息
+          required: true
+          schema:
+            $ref: '#/definitions/DuoBaoTraceInfo'
+      responses:
+        '200':
+          description: succeed
+  /asset/quality/putFreshQuality:
+    post:
+      summary: 调用hqcc4链码中putQuality函数执行存储质检信息的业务逻辑
+      operationId: asset_product_method_putQuality
+      tags:
+        - '录入数据'
+      parameters:
+        - in: body
+          name: 请求参数
+          description: 多宝鱼质检信息
+          required: true
+          schema:
+            $ref: '#/definitions/Quality'
+      responses:
+        '200':
+          description: succeed
+  /asset/traceinfo2/8:
+    get:
+      summary: 调用hqcc4链码中getTraceInfo函数执行查询溯源信息的业务逻辑
+      operationId: asset_product_method_getTraceInfo
+      tags:
+        - '查询数据'
+      parameters:
+        - in: body
+          name: 请求参数
+          description: 多宝鱼质检信息
+          required: false
+      responses:
+        '200':
+          description: succeed
+
+  /qualities/{page}:
+    get:
+      summary: 获取最新质检信息
+      tags:
+        - quality
+      parameters:
+        - name: page
+          in: path
+          description: 分页查询
+          required: false
+          type: integer
+      responses:
+        200:
+          description: 成功返回最新质检信息列表
+  /quality/{id}/{page}:
+    get:
+      summary: 获取某商品的质检信息
+      tags:
+        - quality
+      parameters:
+        - name: id
+          in: path
+          description: 商品 Id
+          required: true
+          type: string
+        - name: page
+          in: path
+          description: 分页查询
+          required: false
+          type: integer
+      responses:
+        200:
+          description: 成功返回该商品的质检信息列表
+
+definitions:
+  ImageInfo:
+    type: object
+    required:
+      - name
+      - url
+    properties:
+      name:
+        type: string
+        description: 名称
+        
+      url:
+        type: string
+        description: 图片URL
+    example:
+      name: 鱼苗信息
+      url: 'http://yu.jywykjgs.com/bbt/fishimg.jsp?/bbt/upload/20180111140539408.jpg' 
+    
+  DuoBaoTraceInfo:
+    type: object
+    required:
+      - goods_name
+      - id
+      - goods_name
+      - batch_id
+      - run_company
+      - order_time
+      - check_org
+      - check_time
+      - check_result
+      - check_person
+      - breed_company
+      - catch_time
+      - temperature
+      - salinity
+      - growth
+      - breed_person
+      - breed_contact
+      - transport_type
+      - transport_time
+      - plate_number
+      - transport_person
+      - delivery_company
+      - delivery_time
+      - trade_number
+      - create_time
+      - update_time
+      - status
+      - sample_ids
+      - certs
+      - fries
+      - catches
+
+    properties:
+      id:
+        type: integer
+        description: 编号
+      goods_name:
+        type: string
+        description: 商品名称
+      batch_id:
+        type: string
+        description: 查询码（母码，批次码）
+      run_company:
+        type: string
+        description: 经营企业
+      order_time:
+        type: string
+        description: 出单时间
+      check_org:
+        type: string
+        description: 检测单位
+      check_time:
+        type: string
+        description: 检测时间
+      check_result:
+        type: string
+        description: 检测结果
+      check_person:
+        type: string
+        description: 检测人
+      breed_company:
+        type: string
+        description: 养殖企业
+      catch_time:
+        type: string
+        description: 捕捞时间
+      temperature:
+        type: string
+        description: 水温
+      salinity:
+        type: string
+        description: 盐度
+      growth:
+        type: string
+        description: 生长周期
+      breed_person:
+        type: string
+        description: 养殖操作人
+      breed_contact:
+        type: string
+        description: 养殖人联系方式
+      transport_type:
+        type: string
+        description: 公司/个体（运输方式）
+      transport_time:
+        type: string
+        description: 装车时间
+      plate_number:
+        type: string
+        description: 车牌号
+      transport_person:
+        type: string
+        description: 运输操作人
+      delivery_company:
+        type: string
+        description: 经销商
+      delivery_time:
+        type: string
+        description: 到达时间
+      trade_number:
+        type: string
+        description: 交易码
+      create_time:
+        type: string
+        description: 创建时间
+      update_time:
+        type: string
+        description: 更新时间
+      status:
+        type: string
+        description: 状态
+        default: 1
+      sample_ids:
+        type: array
+        items:
+          type: string
+        description: 子码
+      certs:
+        type: array
+        items:
+          $ref: '#/definitions/ImageInfo'
+        description: 检测信息
+      fries:
+        type: array
+        items:
+          $ref: '#/definitions/ImageInfo'
+        description: 鱼苗信息
+      catches:
+        type: array
+        items:
+          $ref: '#/definitions/ImageInfo'
+        description: 捕捞信息
+        
+    example:
+      certs:
+        - name: '鱼苗信3'
+          url: 'http://yu.jywykjgs.com/bbt/fishimg.jsp?/bbt/upload/20180111140539408.jpg'
+        - name: '水质检测111'
+          url: 'http://yu.jywykjgs.com/bbt/waterimg.jsp?/bbt/upload/20180111140524105.jpg'
+      fries:
+        - name: '小鱼苗'
+          url: 'http://bbt.jywykjgs.com/duobaoyu/UpFiles/6b7978bb-29bf-465d-9c39-7be421fac782%E5%B0%8F%E9%B1%BC%E8%8B%97.jpg'
+        - name: '小鱼苗'
+          url: 'http://bbt.jywykjgs.com/duobaoyu/UpFiles/a59b213c-d5a9-4ec9-93c5-007a8a066053%E5%B0%8F%E9%B1%BC%E8%8B%971.jpg'
+      catches:
+        - name: '捕捞照片'
+          url: 'http://yu.jywykjgs.com/bbt/upload/20180111140651805.jpg'
+      goods_name: '半边天多宝鱼'
+      batch_id: '78550580521238'
+      sample_ids:
+        - '8'
+      run_company: '福建永辉现代农业发展有限公司'
+      order_time: '2018/1/8 9:04:53'
+      check_org: '兴城市佳盈伟业商贸有限公司质检部'
+      check_time: '2018/1/8 13:15:51'
+      check_result: '质检合格'
+      check_person: '陆文爽'
+      breed_company: '刘宁养殖场'
+      catch_time: '2018/1/11 12:08:36'
+      temperature: '14℃'
+      salinity: '24%'
+      growth: '0.5-0.7斤1年，0.8-1斤14月，1-1.5斤18月，3斤以上3年'
+      breed_person: '刘宁'
+      breed_contact: '13358803987'
+      transport_type: '个体'
+      transport_time: '2018-01-11 13:00:49'
+      plate_number: '辽PD1315'
+      transport_person: '徐光灿'
+      delivery_company: '北京--北京永辉超市有限公司'
+      delivery_time: '2018-01-11 22:54:43'
+      delivery_person: '刘彪'
+  Quality:
+    type: object
+    required:
+      - id
+      - trace_code
+      - area_code
+      - area_name
+      - farmer
+      - supplier_no
+      - supplier_name
+      - goods_no
+      - goosd_name
+      - sample_no
+      - test_item_name
+      - test_site
+      - test_person
+      - test_value
+      - test_unit
+      - test_time
+      - qualified
+      - deliver_region
+      - create_time
+      - update_time
+      - status
+    properties:
+      id:
+        type: integer
+        description: 编号
+      trace_code:
+        type: string
+        description: 追溯码
+      area_code:
+        type: string
+        description: 产地编码
+      area_name:
+        type: string
+        description: 产地名称
+      farmer:
+        type: string
+        description: 农户
+      supplier_no:
+        type: string
+        description: 供应商编码
+      supplier_name:
+        type: string
+        description: 供应商名字
+      goods_no:
+        type: string
+        description: 商品编号
+      goosd_name:
+        type: string
+        description: 商品名称
+      sample_no:
+        type: string
+        description: 样品编码
+      test_item_name:
+        type: string
+        description: 检测项目名称
+      test_site:
+        type: string
+        description: 检测站点
+      test_person:
+        type: string
+        description: 检测人
+      test_value:
+        type: string
+        description: 检测值
+      test_unit:
+        type: string
+        description: 检测单位
+      test_time:
+        type: string
+        description: 检测日期
+      qualified:
+        type: string
+        description: 是否合格
+      deliver_region:
+        type: string
+        description: 配送区域
+      create_time:
+        type: string
+        description: 创建时间
+      update_time:
+        type: string
+        description: 更新时间
+      status:
+        type: string
+        description: 状态
+    example:
+      area_code: '350100'
+      area_name: '福建省/福州市'
+      create_time: '2018-07-23 17:12:56'
+      deliver_region: ''
+      farmer: '001'
+      goods_no: ''
+      goosd_name: '本地黑李'
+      id: '1189454'
+      qualified: '1'
+      sample_no: '048'
+      status: '1'
+      supplier_name: '核果'
+      supplier_no: ''
+      test_item_name: '有机磷、氨基甲酸酯类农药残留'
+      test_person: '永辉超市'
+      test_site: '永辉超市食品安全云网'
+      test_time: '2016-07-31 13:39:23'
+      test_unit: '%'
+      test_value: '9.1'
+      trace_code: '20160731350100A01048'
+      update_time: '2016-07-31 14:21:32'
