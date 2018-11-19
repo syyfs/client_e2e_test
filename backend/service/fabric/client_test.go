@@ -41,12 +41,11 @@ func TestClientE2E(t *testing.T) {
 	key_A := "a"
 
 	key_B := "b"
-	//value := make([]byte, 10)
-	//rand.Read(value)
+
 
 	result, err := client.Execute(service.InvokeConfig{
 		ChannelId: "mychannel",
-		CcName:    "mycc03", //mycc
+		CcName:    "mycc", //mycc
 		CcFcn:     "invoke",
 		CcArgs:    [][]byte{
 						[]byte(key_A),[]byte(key_B), []byte(strconv.Itoa(10))},
@@ -75,7 +74,7 @@ func TestClientQueryE2E(t *testing.T){
 
 	result, err := client.Query(service.InvokeConfig{
 		ChannelId: "mychannel",
-		CcName:    "mycc02", //mycc
+		CcName:    "mycc", //mycc
 		CcFcn:     "query",
 		CcArgs:    [][]byte{
 			[]byte(key_A)},
