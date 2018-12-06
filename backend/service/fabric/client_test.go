@@ -9,6 +9,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	fabcfg "github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/protos/common"
@@ -16,7 +17,12 @@ import (
 	"brilliance/client_e2e_test/blockchain/backend/service"
 	"brilliance/client_e2e_test/blockchain/common/config"
 	"strconv"
+	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
+	"github.com/hyperledger/fabric-sdk-go/third_party/github.com/hyperledger/fabric/core/common/ccprovider"
+	"brilliance/client_e2e_test/blockchain/backend/service/fabric/chaincode"
 )
+
+var chaincodeName = "mycc1"
 
 type BlockData struct {
 	TxId   string `json:"txId"`
@@ -33,10 +39,15 @@ func TestClientE2E(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	client, err := NewFabricClient()
+
+	configProvider := fabcfg.FromFile(config.GetConfigFile())
+	sdk, err := fabsdk.New(configProvider)
+
 	if err != nil {
 		t.Error(err)
 	}
+
+	client := &Client{fabSdk: sdk, user: "Admin", mspId: "Org1"}
 
 	key_A := "a"
 
@@ -56,8 +67,6 @@ func TestClientE2E(t *testing.T) {
 	t.Log(result)
 
 }
-
-
 func TestClientQueryE2E(t *testing.T){
 	os.Setenv("FABRIC_ARTIFACTS", "../../../")
 	err := config.InitConfig(configPath)
@@ -84,7 +93,6 @@ func TestClientQueryE2E(t *testing.T){
 	}
 	t.Log(result)
 }
-
 func TestClient_DiscoveryService(t *testing.T) {
 	os.Setenv("FABRIC_ARTIFACTS", "../../../")
 	err := config.InitConfig(configPath)
@@ -100,11 +108,6 @@ func TestClient_DiscoveryService(t *testing.T) {
 	t.Log(client)
 
 }
-
-
-
-
-
 func TestClient_Query_GetBlockByNumber(t *testing.T) {
 	os.Setenv("FABRIC_ARTIFACTS", "../../../")
 	err := config.InitConfig(configPath)
@@ -166,20 +169,32 @@ func TestClient_Query_GetTransactionByID(t *testing.T) {
 		t.Error(err)
 	}
 	result, err := client.Query(service.InvokeConfig{
-		ChannelId: "yhchannel",
+		ChannelId: "mychannel",
 		CcName:    "qscc", //mycc
 		CcFcn:     "GetTransactionByID",
-		CcArgs:    [][]byte{[]byte("yhchannel"), []byte("493f405288c2cc781a81135b6775bf61fea3e363ab016ff3c4b3dce6e056c800")},
+		CcArgs:    [][]byte{[]byte("mychannel"), []byte("587a8c3d1b44236c65cdcb91b38d6e90c7111197a286829adb5610f36a9cf31a")},
 	})
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Printf("result:[%#v]\n",result)
 	//fmt.Println(result)
 	//解析请求结果
-	dataMap := make(map[string]interface{})
-	parseTrans(result.Payload, dataMap)
-	fmt.Println(dataMap)
-	//t.Log(result)
+	transactionEnvelope := parseTrans_1(result.Payload)
+
+	payload := &common.Payload{}
+	proto.Unmarshal(transactionEnvelope.GetPayload(), payload)
+	//
+	signatureHeader := &common.SignatureHeader{}
+	proto.Unmarshal(payload.Header.SignatureHeader, signatureHeader)
+
+	signatureHeader.String()
+	signatureHeader.GetCreator()
+
+	t.Logf("transactionEnvelope = [%s]\n", transactionEnvelope.String())
+	t.Logf("signatureHeader.String() = [%s]\n", signatureHeader.String())
+
+
 }
 
 func TestClient_Execute(t *testing.T) {
@@ -224,7 +239,6 @@ func TestClient_Execute(t *testing.T) {
 	t.Log("Result:", result.Payload)
 	client.Close()
 }
-
 func TestClient_GetTraceInfo(t *testing.T) {
 	os.Setenv("FABRIC_ARTIFACTS", "../../../")
 	err := config.InitConfig(configPath)
@@ -301,15 +315,95 @@ func parseTrans(buf []byte, result map[string]interface{}) {
 	processedTx := &peer.ProcessedTransaction{}
 	fmt.Println(processedTx)
 	proto.Unmarshal(buf, processedTx)
+
 	envelope := processedTx.GetTransactionEnvelope()
 	payload := &common.Payload{}
 	proto.Unmarshal(envelope.GetPayload(), payload)
+
 	channelHeader := &common.ChannelHeader{}
 	proto.Unmarshal(payload.Header.ChannelHeader, channelHeader)
 	blockTime := time.Unix(channelHeader.Timestamp.Seconds, 0).Format("2006-01-02 15:04:05")
 
+
+
 	result["txid"] = channelHeader.GetTxId()
 	result["blockTime"] = blockTime
-	result["validationcode"] = processedTx.GetValidationCode()
-	result["validcodename"] = peer.TxValidationCode_name[processedTx.GetValidationCode()]
+	result["ValidationCode"] = processedTx.GetValidationCode()
+	result["ValidationCodename"] = peer.TxValidationCode_name[processedTx.GetValidationCode()]
+
+	signature := processedTx.GetTransactionEnvelope().GetSignature()
+
+	result["signature"] = signature
+
 }
+
+func parseTrans_1(buf []byte) (*common.Envelope ){
+	//解析请求结果
+	processedTx := &peer.ProcessedTransaction{}
+	fmt.Println(processedTx)
+	proto.Unmarshal(buf, processedTx)
+
+	envelope := processedTx.GetTransactionEnvelope()
+	payload := &common.Payload{}
+	proto.Unmarshal(envelope.GetPayload(), payload)
+	//
+	signatureHeader := &common.SignatureHeader{}
+	proto.Unmarshal(payload.Header.SignatureHeader, signatureHeader)
+	//blockTime := time.Unix(channelHeader.Timestamp.Seconds, 0).Format("2006-01-02 15:04:05")
+	signatureHeader.String()
+	signatureHeader.GetCreator()
+
+
+	return envelope
+
+}
+
+
+
+func TestClient_GetCCData(t *testing.T) {
+	os.Setenv("FABRIC_ARTIFACTS", "../../../")
+	err := config.InitConfig(configPath)
+	if err != nil {
+		t.Fatalf("init config error...")
+	}
+
+	configProvider := fabcfg.FromFile(config.GetConfigFile())
+	sdk, err := fabsdk.New(configProvider)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	client := &Client{fabSdk: sdk, user: "Admin", mspId: "Org2"}
+
+	result, err := client.Query(service.InvokeConfig{
+		ChannelId: "mychannel",
+		CcName:    "lscc", //mycc
+		CcFcn:     "getccdata",
+		CcArgs:    [][]byte{[]byte("mychannel"),[]byte("mycc2")},
+	})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	ccdata := &ccprovider.ChaincodeData{}
+	proto.Unmarshal(result.Payload, ccdata)
+
+	spe , err := chaincode.ParseSignPolicyEnvelop(ccdata.Policy)
+	if err != nil {
+		t.Fatal(err.Error())
+
+	}
+	noutof := spe.Rule.GetNOutOf()
+
+	t.Logf("ccdata.noutof = [%s]\n", noutof.String())
+
+	mspiden := spe.Identities
+	for i , msp := range mspiden{
+		t.Logf("The [%d] Identities [%#v] \n",i, string(msp.Principal))
+	}
+	t.Logf("result.TxId :[%s] \n" ,result.TxId)
+	client.Close()
+}
+
+

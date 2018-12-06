@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"brilliance/client_e2e_test/blockchain/backend/service"
 	"brilliance/client_e2e_test/blockchain/common/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/context"
 )
 
 type Client struct {
@@ -23,7 +24,7 @@ func NewFabricClient() (service.FabricClient, error) {
 		return nil, err
 	}
 
-	return &Client{fabSdk: sdk, user: "Admin", mspId: "Org1"}, nil
+	return &Client{fabSdk: sdk, user: "Admin", mspId: "Org2"}, nil
 }
 
 func (c *Client) Close() error {
@@ -43,7 +44,7 @@ func (c *Client) Query(cfg service.InvokeConfig) (result service.InvokeResult, e
 		Fcn:          cfg.CcFcn,
 		Args:         cfg.CcArgs,
 		TransientMap: cfg.CcTransientMap,
-	}, channel.WithTargetEndpoints("peer0.org1.example.com"))
+	}, channel.WithTargetEndpoints("peer0.org2.example.com"))
 
 	log.Infof("Query chaincode '%s', TxId=%s", cfg.CcName, resp.TransactionID)
 	result.TxId = string(resp.TransactionID)
@@ -63,10 +64,30 @@ func (c *Client) Execute(cfg service.InvokeConfig) (result service.InvokeResult,
 		Fcn:          cfg.CcFcn,
 		Args:         cfg.CcArgs,
 		TransientMap: cfg.CcTransientMap,
-		// channel.WithTargetEndpoints("peer0.org1.example.com"))
+		// channel.WithTargetEndpoints("peer0.org1.example.com")) ,
 	}, channel.WithTargetEndpoints("peer0.org1.example.com"))
-
+// utils.MarshalOrPanic(cauthdsl.SignedByMspAdmin("Org3MSP"))
 	log.Infof("Query chaincode '%s', TxId=%s", cfg.CcName, resp.TransactionID)
+	result.TxId = string(resp.TransactionID)
+	result.Payload = resp.Payload
+	return
+}
+
+func Invoke(clientChannelContext context.ChannelProvider,cfg service.InvokeConfig, targets []string ) (result service.InvokeResult, err error){
+	client, err := channel.New(clientChannelContext)
+	if err != nil {
+		return service.InvokeResult{} ,err
+	}
+
+	resp, err := client.Execute(channel.Request{
+		ChaincodeID:  cfg.CcName,
+		Fcn:          cfg.CcFcn,
+		Args:         cfg.CcArgs,
+		TransientMap: cfg.CcTransientMap,
+		// channel.WithTargetEndpoints("peer0.org1.example.com"))
+	}, channel.WithTargetEndpoints(targets...))
+
+	log.Infof("invoke chaincode '%s', TxId=%s", cfg.CcName, resp.TransactionID)
 	result.TxId = string(resp.TransactionID)
 	result.Payload = resp.Payload
 	return

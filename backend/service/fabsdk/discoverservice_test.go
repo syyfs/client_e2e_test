@@ -1,19 +1,51 @@
 package fabsdk
 
 import (
-	"os"
-	"testing"
 	"brilliance/client_e2e_test/blockchain/common/config"
+	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery/dynamicdiscovery"
+	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	fabcfg "github.com/hyperledger/fabric-sdk-go/pkg/core/config"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/factory/defsvc"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
-	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery/dynamicdiscovery"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/provider/chpvdr"
 	"github.com/stretchr/testify/require"
+	"os"
+	"testing"
 )
 
 var configPath = "../../../config/config.yaml"
+
+
+func TestClientDiscoveryE2E(t *testing.T) {
+
+	os.Setenv("FABRIC_ARTIFACTS", "../../../")
+	err := config.InitConfig(configPath)
+	if err != nil {
+		t.Error(err)
+	}
+	configProvider := fabcfg.FromFile(config.GetConfigFile())
+	sdk , err := fabsdk.New(configProvider,fabsdk.WithServicePkg(&DynamicDiscoveryProviderFactory{}))
+	require.NoError(t, err, "Failed to create new SDK")
+	defer sdk.Close()
+
+	chProvider := sdk.ChannelContext("mychannel", fabsdk.WithUser("Admin"), fabsdk.WithOrg("Org1"))
+	//chCtx, err := chProvider()
+	//require.NoError(t, err, "Error creating channel context")
+
+	chCtx, err := chProvider()
+	require.NoError(t, err, "Error creating channel context")
+
+	discoveryService, err := chCtx.ChannelService().Discovery()
+	require.NoError(t, err, "Error creating discovery service")
+
+	peers, err := discoveryService.GetPeers()
+	for _, p := range peers {
+		t.Logf("- [%s] - MSP [%s]", p.URL(), p.MSPID())
+
+	}
+
+	require.NoError(t, err, "Error  discovery Invoke")
+}
 
 
 func TestClient_DiscoveryService(t *testing.T) {
@@ -23,7 +55,7 @@ func TestClient_DiscoveryService(t *testing.T) {
 		t.Error(err)
 	}
 	configProvider := fabcfg.FromFile(config.GetConfigFile())
-	sdk , err := fabsdk.New(configProvider,fabsdk.WithServicePkg(&dynamicDiscoveryProviderFactory{}))
+	sdk , err := fabsdk.New(configProvider,fabsdk.WithServicePkg(&DynamicDiscoveryProviderFactory{}))
 	require.NoError(t, err, "Failed to create new SDK")
 	defer sdk.Close()
 
@@ -45,7 +77,7 @@ func TestClient_DiscoveryService(t *testing.T) {
 
 }
 
-type dynamicDiscoveryProviderFactory struct {
+type DynamicDiscoveryProviderFactory struct {
 	// 外部引用
 	defsvc.ProviderFactory
 }
@@ -60,8 +92,9 @@ type channelService struct {
 	discovery fab.DiscoveryService
 }
 
+// 对ProviderFactory中的CreateChannelProvider()函数进行了重写
 // CreateChannelProvider returns a new default implementation of channel provider
-func (f *dynamicDiscoveryProviderFactory) CreateChannelProvider(config fab.EndpointConfig) (fab.ChannelProvider, error) {
+func (f *DynamicDiscoveryProviderFactory) CreateChannelProvider(config fab.EndpointConfig) (fab.ChannelProvider, error) {
 	chProvider, err := chpvdr.New(config)
 	if err != nil {
 		return nil, err
@@ -72,7 +105,7 @@ func (f *dynamicDiscoveryProviderFactory) CreateChannelProvider(config fab.Endpo
 	}, nil
 }
 
-// Close frees resources and caches.
+// Close frees resources and caches. Close释放资源和缓存
 func (cp *channelProvider) Close() {
 	if c, ok := cp.ChannelProvider.(closable); ok {
 		c.Close()
