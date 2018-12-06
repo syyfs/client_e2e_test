@@ -14,22 +14,13 @@ import (
 
 // 安装chaincode； 实例化chaincode
 var configPath = "../../../../config/config.yaml"
-var chaincodeName = "mycc"
+var chaincodeName = "mycc1"
 var version = "1.1"
 var chaincodePath = "example02/cmd"
 var channelID = "mychannel"
 
 var filename = "/data/gopath/src/brilliance/client_e2e_test/blockchain/chaincode/src.tar.gz"
 
-func TestReadChaincodePkg(t *testing.T){
-
-	pkg, err := ReadChaincodePkg()
-	if err != nil{
-		t.Errorf("ReadChaincodePkg Faile! err ===> [%s]\n", err)
-	}
-
-	t.Logf("pkg ===> [%v]\n", pkg)
-}
 
 func TestInstallChaincode(t *testing.T){
 	os.Setenv("FABRIC_ARTIFACTS", "../../../../")
@@ -44,6 +35,7 @@ func TestInstallChaincode(t *testing.T){
 	//prepare context
 	adminContext := sdk.Context(fabsdk.WithUser("Admin"), fabsdk.WithOrg("Org1"))
 
+	// TODO 根据组织是如何获取自己组织的peer节点的
 	// Org resource management client
 	orgResMgmt, err := resmgmt.New(adminContext)
 	if err != nil {
@@ -61,17 +53,6 @@ func TestInstallChaincode(t *testing.T){
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Set up chaincode policy
-	//ccPolicy := GetCcPolicy()
-	//// Org resource manager will instantiate 'example_cc' on channel
-	//resp, err := orgResMgmt.InstantiateCC(
-	//	channelID,
-	//	resmgmt.InstantiateCCRequest{Name: "mycc", Path: "github.com/example_cc", Version: "1.0", Args: integration.ExampleCCInitArgs(), Policy: ccPolicy},
-	//	resmgmt.WithRetry(retry.DefaultResMgmtOpts),
-	//)
-	//require.Nil(t, err, "error should be nil")
-	//require.NotEmpty(t, resp, "transaction response should be populated")
-
 
 }
 
@@ -95,9 +76,17 @@ func TestInstantiateCC(t *testing.T)  {
 		t.Fatalf("Failed to create new resource management client: %s", err)
 	}
 
-
+	//mspids := []string{"Org1MSP","Org2MSP","Org3MSP"}
+	//clientids := []string{"Org1"}
 	//Set up chaincode policy
-	ccPolicy := GetCcPolicy()
+	//ccPolicy := GetCcPolicySignedByAnyMember(mspids)
+	// todo 未测试通过
+	//ccPolicy := GetCcPolicySignedByAnyClient(clientids)
+	//ccPolicy := GetCcPolicySignedByAnyPeer(mspids)
+	//ccPolicy := GetCcPolicySignedByAnyAdmin(mspids)
+	//ccPolicy := GetCcPolicySignedByMSPAdmin("Org2MSP")
+	//ccPolicy := SignedByAssignMember(2,[]string{"Org1MSP","Org2MSP","Org3MSP"})
+	ccPolicy := SignedByGivenRoleMP([]string{"Org1MSP","Org2MSP","Org3MSP"})
 	// Org resource manager will instantiate 'example_cc' on channel
 	resp, err := orgResMgmt.InstantiateCC(
 		channelID,
@@ -106,4 +95,18 @@ func TestInstantiateCC(t *testing.T)  {
 	)
 	require.Nil(t, err, "error should be nil")
 	require.NotEmpty(t, resp, "transaction response should be populated")
+}
+
+func TestQueryChaincodes(t *testing.T) {
+	os.Setenv("FABRIC_ARTIFACTS", "../../../../")
+	err := config.InitConfig(configPath)
+	if err != nil {
+		t.Error(err)
+	}
+	configProvider := fabcfg.FromFile(config.GetConfigFile())
+	sdk , err := fabsdk.New(configProvider)
+	require.NoError(t, err, "Failed to create new SDK")
+	defer sdk.Close()
+	chaincodes := QueryChaincodes(sdk)
+	t.Logf("response : %#v \n",chaincodes)
 }
