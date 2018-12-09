@@ -32,7 +32,7 @@ client:
     security:
      enabled: true
      default:
-      provider: "SW"
+      provider: "GM"
      hashAlgorithm: "SHA2"
      softVerify: true
      level: 256
@@ -60,6 +60,29 @@ channels:
         ledgerQuery: true
         eventSource: true
 
+#      peer0.org2.example.com:
+#        endorsingPeer: true
+#        chaincodeQuery: true
+#        ledgerQuery: true
+#        eventSource: true
+#      peer1.org2.example.com:
+#        endorsingPeer: true
+#        chaincodeQuery: true
+#        ledgerQuery: true
+#        eventSource: true
+#
+#      peer0.org3.example.com:
+#        endorsingPeer: true
+#        chaincodeQuery: true
+#        ledgerQuery: true
+#        eventSource: true
+#      peer1.org3.example.com:
+#        endorsingPeer: true
+#        chaincodeQuery: true
+#        ledgerQuery: true
+#        eventSource: true
+
+
     policies:
       queryChannelConfig:
         minResponses: 1
@@ -69,6 +92,7 @@ channels:
           initialBackoff: 500ms
           maxBackoff: 5s
           backoffFactor: 2.0
+
 organizations:
   Org1:
     mspid: Org1MSP
@@ -77,6 +101,22 @@ organizations:
     peers:
       - peer0.org1.example.com
       - peer1.org1.example.com
+
+#  Org2:
+#    mspid: Org2MSP
+#    cryptoPath:  peerOrganizations/org2.example.com/users/{username}@org2.example.com/msp/
+#
+#    peers:
+#      - peer0.org2.example.com
+#      - peer1.org2.example.com
+#
+#  Org3:
+#    mspid: Org3MSP
+#    cryptoPath:  peerOrganizations/org3.example.com/users/{username}@org3.example.com/msp/
+#
+#    peers:
+#      - peer0.org3.example.com
+#      - peer1.org3.example.com
 
   ordererorg:
       mspID: "OrdererOrg"
@@ -98,6 +138,7 @@ orderers:
       path: ${FABRIC_ARTIFACTS}/config/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
 
 peers:
+
   peer0.org1.example.com:
     url: peer0.org1.example.com:7051
     eventUrl: peer0.org1.example.com:7053
@@ -127,4 +168,64 @@ peers:
 
       tlsCACerts:
         path: ${FABRIC_ARTIFACTS}/config/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem
+
+#  peer0.org2.example.com:
+#    url: peer0.org2.example.com:9051
+#    eventUrl: peer0.org2.example.com:9053
+#
+#    grpcOptions:
+#      ssl-target-name-override: peer0.org2.example.com
+#      keep-alive-time: 0s
+#      keep-alive-timeout: 20s
+#      keep-alive-permit: false
+#      fail-fast: false
+#      allow-insecure: false
+#
+#    tlsCACerts:
+#      path: ${FABRIC_ARTIFACTS}/config/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+#
+#  peer1.org2.example.com:
+#      url: peer1.org2.example.com:10051
+#      eventUrl: peer1.org2.example.com:10053
+#
+#      grpcOptions:
+#        ssl-target-name-override: peer1.org2.example.com
+#        keep-alive-time: 0s
+#        keep-alive-timeout: 20s
+#        keep-alive-permit: false
+#        fail-fast: false
+#        allow-insecure: false
+#
+#      tlsCACerts:
+#        path: ${FABRIC_ARTIFACTS}/config/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem
+#
+#  peer0.org3.example.com:
+#    url: peer0.org3.example.com:11051
+#    eventUrl: peer0.org3.example.com:11053
+#
+#    grpcOptions:
+#      ssl-target-name-override: peer0.org3.example.com
+#      keep-alive-time: 0s
+#      keep-alive-timeout: 20s
+#      keep-alive-permit: false
+#      fail-fast: false
+#      allow-insecure: false
+#
+#    tlsCACerts:
+#      path: ${FABRIC_ARTIFACTS}/config/crypto-config/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
+#
+#  peer1.org3.example.com:
+#      url: peer1.org3.example.com:12051
+#      eventUrl: peer1.org3.example.com:12053
+#
+#      grpcOptions:
+#        ssl-target-name-override: peer1.org3.example.com
+#        keep-alive-time: 0s
+#        keep-alive-timeout: 20s
+#        keep-alive-permit: false
+#        fail-fast: false
+#        allow-insecure: false
+#
+#      tlsCACerts:
+#        path: ${FABRIC_ARTIFACTS}/config/crypto-config/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
 
