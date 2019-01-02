@@ -32,7 +32,8 @@ client:
     security:
      enabled: true
      default:
-      provider: "GM"
+      provider: "SW"
+#      provider: "GM"
      hashAlgorithm: "SHA2"
      softVerify: true
      level: 256
@@ -228,4 +229,4 @@ peers:
 #
 #      tlsCACerts:
 #        path: ${FABRIC_ARTIFACTS}/config/crypto-config/peerOrganizations/org3.example.com/tlsca/tlsca.org3.example.com-cert.pem
-
+#

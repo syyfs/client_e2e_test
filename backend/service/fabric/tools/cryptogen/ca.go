@@ -1,17 +1,18 @@
 package cryptogen
 
 import (
-	"brilliance/fast-deploy/common/config"
-	"brilliance/gm/x509"
+	gmx509 "brilliance/gm/x509"
 	"crypto"
-	"crypto/ecdsa"
 	"crypto/rand"
+	//"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/bccsp/signer"
+	"github.com/hyperledger/fabric/bccsp/utils"
+
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -31,25 +32,37 @@ func InitCANodeSpec(commonName, Country, Province, Locality string) NodeSpec {
 	return *canodeSpec
 }
 
+func cleanup(dir string) {
+	os.RemoveAll(dir)
+}
+/**
+生成组织ca私钥和公钥 (GM)
+ */
 func GeneratePrivAndPub( orgDomain string, commonName string, country, province, locality, orgUnit, streetAddress, postalCode string) (privStr, pubStr string, err error) {
 
 	priv, privsigner, err := GeneratePrivKey() // bccsp.keystore bccsp.key
+	fmt.Printf("=== GeneratePrivKey err:[%#v]\n ====",err)
 	if err != nil {
 		return "", "", err
 	}
 
 	// get public signing certificate
-	ecPubKey, err := GetECPublicKey(priv)
+	//ecPubKey, err := GetPublicKey(priv)
+	ecPubKey := privsigner.Public()
+	//ecPubKey, err := GetECPublicKey(priv)
+	fmt.Printf("=== GetGMPublicKey err:[%#v]\n ====",err)
+	fmt.Printf("=== GetGMPublicKey ecPubKey:[%#v]\n ====",ecPubKey)
 	if err != nil {
 		return "", "", err
 	}
+	//template := x509Template()
 	template := x509Template()
 	//this is a CA
 	template.IsCA = true
-	template.KeyUsage |= x509.KeyUsageDigitalSignature |
-		x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign |
-		x509.KeyUsageCRLSign
-	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageAny}
+	template.KeyUsage |= gmx509.KeyUsageDigitalSignature |
+		gmx509.KeyUsageKeyEncipherment | gmx509.KeyUsageCertSign |
+		gmx509.KeyUsageCRLSign
+	template.ExtKeyUsage = []gmx509.ExtKeyUsage{gmx509.ExtKeyUsageAny}
 
 	//set the organization for the subject
 	subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
@@ -58,8 +71,8 @@ func GeneratePrivAndPub( orgDomain string, commonName string, country, province,
 
 	template.Subject = subject
 	template.SubjectKeyId = priv.SKI()
-
-	certBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, ecPubKey, privsigner)
+	certBytes, err := gmx509.CreateCertificate(rand.Reader, &template, &template, ecPubKey, privsigner)
+	fmt.Printf("=== gmx509.CreateCertificate err:[%s]\n ====",err)
 	if err != nil {
 		return "", "", err
 	}
@@ -67,8 +80,8 @@ func GeneratePrivAndPub( orgDomain string, commonName string, country, province,
 	block := &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}
 	pemByte := pem.EncodeToMemory(block)
 	pubStr = string(pemByte)
-	privStr, err = GetGmPrivateKey(priv)
-	//privStr, err = LoadPrivateKey(keystorePath)
+	privStr, err = GetPrivateKey(priv)
+	fmt.Printf("GetGmPrivateKey err:[%s] \n", err)
 	if err != nil {
 		return "", "", err
 	}
@@ -78,7 +91,149 @@ func GeneratePrivAndPub( orgDomain string, commonName string, country, province,
 	return privStr, pubStr, err
 }
 
-func GetGmPrivateKey(privKey bccsp.Key) (privStr string , err error){
+
+/**
+生成组织ca私钥和公钥 (GM)
+ */
+func GeneratePrivAndPubWithPath(keystoryPath string, orgDomain string, commonName string, country, province, locality, orgUnit, streetAddress, postalCode string) (privStr, pubStr string, err error) {
+
+	priv, privsigner, err := GeneratePrivKeyWithPath(keystoryPath) // bccsp.keystore bccsp.key
+	if err != nil {
+		return "", "", err
+	}
+
+	// get public signing certificate
+	ecPubKey := privsigner.Public()
+	if err != nil {
+		return "", "", err
+	}
+	//template := x509Template()
+	template := x509Template()
+	//this is a CA
+	template.IsCA = true
+	template.KeyUsage |= gmx509.KeyUsageDigitalSignature |
+		gmx509.KeyUsageKeyEncipherment | gmx509.KeyUsageCertSign |
+		gmx509.KeyUsageCRLSign
+	template.ExtKeyUsage = []gmx509.ExtKeyUsage{gmx509.ExtKeyUsageAny}
+
+	//set the organization for the subject
+	subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
+	subject.Organization = []string{orgDomain}
+	subject.CommonName = commonName
+
+	template.Subject = subject
+	template.SubjectKeyId = priv.SKI()
+	certBytes, err := gmx509.CreateCertificate(rand.Reader, &template, &template, ecPubKey, privsigner)
+	if err != nil {
+		return "", "", err
+	}
+
+	block := &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}
+	pemByte := pem.EncodeToMemory(block)
+	pubStr = string(pemByte)
+	privStr, err = GetPrivateKey(priv)
+	if err != nil {
+		return "", "", err
+	}
+
+	return privStr, pubStr, err
+}
+
+
+func GenerateTLSPrivAndPub( orgDomain string, commonName string, country, province, locality, orgUnit, streetAddress, postalCode string) (privStr, pubStr string, err error) {
+
+	priv, privsigner, err := GenerateTLSPrivKey() // bccsp.keystore bccsp.key
+	if err != nil {
+		return "", "", err
+	}
+
+	// get public signing certificate
+	//ecPubKey, err := GetECPublicKey(priv)
+	ecPubKey, err := GetPublicKey(priv)
+	if err != nil {
+		return "", "", err
+	}
+	template := x509Template()
+	//this is a CA
+	template.IsCA = true
+	template.KeyUsage |= gmx509.KeyUsageDigitalSignature |
+		gmx509.KeyUsageKeyEncipherment | gmx509.KeyUsageCertSign |
+		gmx509.KeyUsageCRLSign
+	template.ExtKeyUsage = []gmx509.ExtKeyUsage{gmx509.ExtKeyUsageAny}
+
+	//set the organization for the subject
+	subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
+	subject.Organization = []string{orgDomain}
+	subject.CommonName = commonName
+
+	template.Subject = subject
+	template.SubjectKeyId = priv.SKI()
+
+	certBytes, err := gmx509.CreateCertificate(rand.Reader, &template, &template, ecPubKey, privsigner)
+	if err != nil {
+		return "", "", err
+	}
+
+	block := &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}
+	pemByte := pem.EncodeToMemory(block)
+	pubStr = string(pemByte)
+	privStr, err = GetPrivateKey(priv)
+	//privStr, err = LoadPrivateKey(keystorePath)
+	if err != nil {
+		return "", "", err
+	}
+	fmt.Printf("===========================\n")
+	fmt.Printf("org tls privStr := [%s] \n", privStr)
+	fmt.Printf("===========================\n")
+	return privStr, pubStr, err
+}
+
+
+func GenerateTLSPrivAndPubWithPath( keystorepath string , orgDomain string, commonName string, country, province, locality, orgUnit, streetAddress, postalCode string) (privStr, pubStr string, err error) {
+
+	priv, privsigner, err := GenerateTLSPrivKeyWithPath(keystorepath) // bccsp.keystore bccsp.key
+	if err != nil {
+		return "", "", err
+	}
+
+	// get public signing certificate
+	ecPubKey, err := GetPublicKey(priv)
+	if err != nil {
+		return "", "", err
+	}
+	template := x509Template()
+	//this is a CA
+	template.IsCA = true
+	template.KeyUsage |= gmx509.KeyUsageDigitalSignature |
+		gmx509.KeyUsageKeyEncipherment | gmx509.KeyUsageCertSign |
+		gmx509.KeyUsageCRLSign
+	template.ExtKeyUsage = []gmx509.ExtKeyUsage{gmx509.ExtKeyUsageAny}
+
+	//set the organization for the subject
+	subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
+	subject.Organization = []string{orgDomain}
+	subject.CommonName = commonName
+
+	template.Subject = subject
+	template.SubjectKeyId = priv.SKI()
+
+	certBytes, err := gmx509.CreateCertificate(rand.Reader, &template, &template, ecPubKey, privsigner)
+	if err != nil {
+		return "", "", err
+	}
+
+	block := &pem.Block{Type: "CERTIFICATE", Bytes: certBytes}
+	pemByte := pem.EncodeToMemory(block)
+	pubStr = string(pemByte)
+	privStr, err = GetPrivateKey(priv)
+	if err != nil {
+		return "", "", err
+	}
+
+	return privStr, pubStr, err
+}
+
+func GetPrivateKey(privKey bccsp.Key) (privStr string , err error){
 	priv , err:= privKey.Bytes()
 	return string(priv), err
 }
@@ -86,10 +241,10 @@ func GetGmPrivateKey(privKey bccsp.Key) (privStr string , err error){
 func GetSignPriveKey(privKey string) (sign crypto.Signer, err error) {
 
 	opts := &factory.FactoryOpts{
-		ProviderName: config.GetBCCSPProvider(),
+		ProviderName: "GM",
 		SwOpts: &factory.SwOpts{
-			HashFamily: config.GetBCCSPHashAlgorithm(),
-			SecLevel:   config.GetBCCSPLevel(),
+			HashFamily: "SHA2",
+			SecLevel:   256,
 		},
 	}
 
@@ -110,23 +265,47 @@ func GetSignPriveKey(privKey string) (sign crypto.Signer, err error) {
 	return sign, err
 }
 
-func cleanup(dir string) {
-	os.RemoveAll(dir)
+
+func GetTLSSignPriveKey(privKey string) (sign crypto.Signer, err error) {
+
+	opts := &factory.FactoryOpts{
+		ProviderName: "SW",
+		SwOpts: &factory.SwOpts{
+			HashFamily: "SHA2",
+			SecLevel:   256,
+		},
+	}
+
+	csp, err := factory.GetBCCSPFromOpts(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	p, _ := pem.Decode([]byte(privKey))
+
+	privateKey, err := csp.KeyImport(p.Bytes, &bccsp.ECDSAPrivateKeyImportOpts{Temporary: true})
+	if err != nil {
+		return
+	}
+
+	sign, err = signer.New(csp, privateKey)
+
+	return sign, err
 }
+
 
 // GeneratePrivateKey creates a private key and stores it in keystorePath
 func GeneratePrivKey() (bccsp.Key, crypto.Signer, error) {
 
 	//cleanup(keystorePath)
-
 	var err error
 	var priv bccsp.Key
 	var s crypto.Signer
 	opts := &factory.FactoryOpts{
-		ProviderName: config.GetBCCSPProvider(),
+		ProviderName: "GM",
 		SwOpts: &factory.SwOpts{
-			HashFamily: config.GetBCCSPHashAlgorithm(),
-			SecLevel:   config.GetBCCSPLevel(),
+			HashFamily: "SHA2",
+			SecLevel:   256,
 
 			//FileKeystore: &factory.FileKeystoreOpts{
 			//	KeyStorePath: keystorePath,
@@ -138,6 +317,99 @@ func GeneratePrivKey() (bccsp.Key, crypto.Signer, error) {
 	if err == nil {
 		// generate a key  opts KeyGenOpts
 		priv, err = csp.KeyGen(&bccsp.GMSM2KeyGenOpts{Temporary: true})
+		if err == nil {
+			// create a crypto.Signer
+			s, err = signer.New(csp, priv)
+		}
+	}
+	return priv, s, err
+}
+
+// GeneratePrivateKey creates a private key and stores it in keystorePath
+func GeneratePrivKeyWithPath(keystoryPath string) (bccsp.Key, crypto.Signer, error) {
+
+	cleanup(keystoryPath)
+	var err error
+	var priv bccsp.Key
+	var s crypto.Signer
+	opts := &factory.FactoryOpts{
+		ProviderName: "GM",
+		SwOpts: &factory.SwOpts{
+			HashFamily: "SHA2",
+			SecLevel:   256,
+
+			FileKeystore: &factory.FileKeystoreOpts{
+				KeyStorePath: keystoryPath,
+			},
+		},
+	}
+
+	csp, err := factory.GetBCCSPFromOpts(opts)
+	if err == nil {
+		// generate a key  opts KeyGenOpts
+		priv, err = csp.KeyGen(&bccsp.GMSM2KeyGenOpts{Temporary: false})
+		if err == nil {
+			// create a crypto.Signer
+			s, err = signer.New(csp, priv)
+		}
+	}
+	return priv, s, err
+}
+
+// GeneratePrivateKey creates a private key and stores it in keystorePath
+func GenerateTLSPrivKey() (bccsp.Key, crypto.Signer, error) {
+
+	//cleanup(keystorePath)
+	var err error
+	var priv bccsp.Key
+	var s crypto.Signer
+	opts := &factory.FactoryOpts{
+		ProviderName: "SW",
+		SwOpts: &factory.SwOpts{
+			HashFamily: "SHA2",
+			SecLevel:   256,
+
+			//FileKeystore: &factory.FileKeystoreOpts{
+			//	KeyStorePath: keystorePath,
+			//},
+		},
+	}
+
+	csp, err := factory.GetBCCSPFromOpts(opts)
+	if err == nil {
+		// generate a key  opts KeyGenOpts
+		priv, err = csp.KeyGen(&bccsp.ECDSAP256KeyGenOpts{Temporary: true})
+		if err == nil {
+			// create a crypto.Signer
+			s, err = signer.New(csp, priv)
+		}
+	}
+	return priv, s, err
+}
+
+// GeneratePrivateKey creates a private key and stores it in keystorePath
+func GenerateTLSPrivKeyWithPath(keystorepath string) (bccsp.Key, crypto.Signer, error) {
+
+	cleanup(keystorepath)
+	var err error
+	var priv bccsp.Key
+	var s crypto.Signer
+	opts := &factory.FactoryOpts{
+		ProviderName: "SW",
+		SwOpts: &factory.SwOpts{
+			HashFamily: "SHA2",
+			SecLevel:   256,
+
+			FileKeystore: &factory.FileKeystoreOpts{
+				KeyStorePath: keystorepath,
+			},
+		},
+	}
+
+	csp, err := factory.GetBCCSPFromOpts(opts)
+	if err == nil {
+		// generate a key  opts KeyGenOpts
+		priv, err = csp.KeyGen(&bccsp.ECDSAP256KeyGenOpts{Temporary: false})
 		if err == nil {
 			// create a crypto.Signer
 			s, err = signer.New(csp, priv)
@@ -171,8 +443,7 @@ func LoadPrivateKey(keystorePath string) (string, error) {
 	return rawKey, err
 }
 
-func GetECPublicKey(priv bccsp.Key) (*ecdsa.PublicKey, error) {
-
+func GetPublicKey(priv bccsp.Key)(pub interface{}, err error){
 	// get the public key
 	pubKey, err := priv.PublicKey()
 	if err != nil {
@@ -183,16 +454,16 @@ func GetECPublicKey(priv bccsp.Key) (*ecdsa.PublicKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	// unmarshal using pkix
-	ecPubKey, err := x509.ParsePKIXPublicKey(pubKeyBytes)
-	if err != nil {
-		return nil, err
+
+	public , err := utils.DERToPublicKey(pubKeyBytes)
+	if err !=  nil {
+		return nil , err
 	}
-	return ecPubKey.(*ecdsa.PublicKey), nil
+	return public, nil
 }
 
 // default template for X509 certificates
-func x509Template() x509.Certificate {
+func x509Template() gmx509.Certificate {
 
 	// generate a serial number
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
@@ -204,7 +475,7 @@ func x509Template() x509.Certificate {
 	notBefore := time.Now().Add(-5 * time.Minute).UTC()
 
 	//basic template to use
-	x509 := x509.Certificate{
+	x509 := gmx509.Certificate{
 		SerialNumber:          serialNumber,
 		NotBefore:             notBefore,
 		NotAfter:              notBefore.Add(expiry).UTC(),
@@ -257,11 +528,11 @@ type CA struct {
 	StreetAddress      string
 	PostalCode         string
 	Signer             crypto.Signer
-	SignCert           *x509.Certificate
+	SignCert           *gmx509.Certificate
 }
 
-func (ca *CA) SignCertificate(name string, ous, sans []string, pub *ecdsa.PublicKey,
-	ku x509.KeyUsage, eku []x509.ExtKeyUsage) ([]byte, error) {
+func (ca *CA) SignCertificate(name string, ous, sans []string, pub interface{},
+	ku gmx509.KeyUsage, eku []gmx509.ExtKeyUsage) ([]byte, error) {
 
 	template := x509Template()
 	template.KeyUsage = ku
@@ -285,20 +556,16 @@ func (ca *CA) SignCertificate(name string, ous, sans []string, pub *ecdsa.Public
 	}
 
 	//create the x509 public cert
-	certBytes, err := x509.CreateCertificate(rand.Reader, &template, ca.SignCert, pub, ca.Signer)
+	certBytes, err := gmx509.CreateCertificate(rand.Reader, &template, ca.SignCert, pub, ca.Signer)
 	if err != nil {
 		return nil, err
 	}
-	//x509Cert, err := x509.ParseCertificate(certBytes)
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	return certBytes, nil
 }
 
 func GetNodeCACert(commonName string,
-	casignerCert *x509.Certificate, casigner crypto.Signer) (nodeMspCaKeyStr string, nodeMspCaCertStr string, err error) {
+	casignerCert *gmx509.Certificate, casigner crypto.Signer) (nodeMspCaKeyStr string, nodeMspCaCertStr string, err error) {
 
 	signCA := CA{
 		Country:  Country,
@@ -307,23 +574,25 @@ func GetNodeCACert(commonName string,
 		Signer:   casigner,
 		SignCert: casignerCert,
 	}
-	nodepriv, _, err := GeneratePrivKey()
+	nodepriv, signer, err := GeneratePrivKey()
 	if err != nil {
 		return "", "", err
 	}
 
-	nodeecPubKey, err := GetECPublicKey(nodepriv)
+	//nodeecPubKey, err := GetGMPublicKey(nodepriv)
+	//nodeecPubKey, err := GetECPublicKey(nodepriv)
+	nodeecPubKey := signer.Public()
 	if err != nil {
 		return "", "", err
 	}
 
-	nodeMspCaKeyStr, err = GetGmPrivateKey(nodepriv)
+	nodeMspCaKeyStr, err = GetPrivateKey(nodepriv)
 	//nodeMspCaKeyStr, err = LoadPrivateKey(keystoryPath)
 	if err != nil {
 		return "", "", err
 	}
 
-	nodeMspCaCert, err := signCA.SignCertificate(commonName, nil, nil, nodeecPubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
+	nodeMspCaCert, err := signCA.SignCertificate(commonName, nil, nil, nodeecPubKey, gmx509.KeyUsageDigitalSignature, []gmx509.ExtKeyUsage{})
 	if err != nil {
 		return "", "", err
 	}
@@ -336,7 +605,7 @@ func GetNodeCACert(commonName string,
 }
 
 func GetNodeTlsCACert(commonName string,
-	casignerCert *x509.Certificate, casigner crypto.Signer) (nodeMspCaKeyStr string, nodeMspCaCertStr string, err error) {
+	casignerCert *gmx509.Certificate, casigner crypto.Signer) (nodeMspCaKeyStr string, nodeMspCaCertStr string, err error) {
 
 	TlsCA := CA{
 		Country:  Country,
@@ -345,24 +614,24 @@ func GetNodeTlsCACert(commonName string,
 		Signer:   casigner,
 		SignCert: casignerCert,
 	}
-	tlspriv, _, err := GeneratePrivKey()
+	tlspriv, tlssigner, err := GenerateTLSPrivKey()
+	if err != nil {
+		return "", "", err
+	}
+	tlsecPubKey := tlssigner.Public()
+	//tlsecPubKey, err := GetECPublicKey(tlspriv)
 	if err != nil {
 		return "", "", err
 	}
 
-	tlsecPubKey, err := GetECPublicKey(tlspriv)
-	if err != nil {
-		return "", "", err
-	}
-
-	nodeMspCaKeyStr, err = GetGmPrivateKey(tlspriv)
+	nodeMspCaKeyStr, err = GetPrivateKey(tlspriv)
 	//nodeMspCaKeyStr, err = LoadPrivateKey(keystoryPath)
 	if err != nil {
 		return "", "", err
 	}
 	sans := []string{commonName}
 	nodeMspCaCert, err := TlsCA.SignCertificate(commonName, nil, sans, tlsecPubKey,
-		x509.KeyUsageDigitalSignature|x509.KeyUsageKeyEncipherment, []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth})
+		gmx509.KeyUsageDigitalSignature|gmx509.KeyUsageKeyEncipherment, []gmx509.ExtKeyUsage{gmx509.ExtKeyUsageServerAuth, gmx509.ExtKeyUsageClientAuth})
 	if err != nil {
 		return "", "", err
 	}
