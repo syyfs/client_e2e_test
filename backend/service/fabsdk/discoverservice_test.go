@@ -2,8 +2,8 @@ package fabsdk
 
 import (
 	"brilliance/client_e2e_test/blockchain/common/config"
-	"encoding/json"
 	"fmt"
+	discclient "github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery"
 	"github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery/dynamicdiscovery"
 	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/fab"
 	"github.com/hyperledger/fabric-sdk-go/pkg/context"
@@ -13,13 +13,9 @@ import (
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/factory/defsvc"
 	"github.com/hyperledger/fabric-sdk-go/pkg/fabsdk/provider/chpvdr"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
-	discclient "github.com/hyperledger/fabric-sdk-go/pkg/client/common/discovery"
 	"testing"
-	"github.com/hyperledger/fabric-sdk-go/pkg/common/providers/msp"
 	"time"
 )
 
@@ -59,7 +55,7 @@ func TestClientDiscoveryE2E(t *testing.T) {
 }
 
 
-func TestClient_DiscoveryService(t *testing.T) {
+func TestClient_DiscoveryService_AddPeersQuery(t *testing.T) {
 	os.Setenv("FABRIC_ARTIFACTS", "../../../")
 	err := config.InitConfig(configPath)
 	if err != nil {
@@ -87,10 +83,6 @@ func TestClient_DiscoveryService(t *testing.T) {
 	req := discclient.NewRequest().OfChannel(orgChannelID).AddPeersQuery()
 	responses, err := client.Send(reqCtx, req,peerCfg1.PeerConfig)
 
-	for _ , res := range responses {
-		fmt.Printf("res.Target():[%s] ; res.ForChannel:[%#v ]\n ",res.Target(),res.ForChannel(orgChannelID))
-	}
-
 	resp := responses[0]
 	chanResp := resp.ForChannel(orgChannelID)
 	peers, err := chanResp.Peers()
@@ -99,40 +91,11 @@ func TestClient_DiscoveryService(t *testing.T) {
 	require.NoError(t, err, "error getting peers")
 	require.NotEmpty(t, peers, "expecting at least one peer but got none")
 
-	for _, peer := range peers {
-		aliveMsg := peer.AliveMessage.GetAliveMsg()
-		if !assert.NotNil(t, aliveMsg, "got nil AliveMessage") {
-			continue
-		}
-		sID := &msp.SerializedIdentity{}
-		err := json.Unmarshal(peer.Identity, sID.SerializedIdentity)
-		if err != nil {
-			errors.Wrap(err, "failed unmarshaling peer's identity")
-		}
-		fmt.Printf("--- Endpoint: %s \n", aliveMsg.Membership.Endpoint)
-		//fmt.Printf("----- peer.Identity:[%s]\n",string(peer.Identity))
-		if !assert.NotNil(t, aliveMsg.Membership, "got nil Membership") {
-			continue
-		}
-		if !assert.NotNil(t, peer.StateInfoMessage, "got nil StateInfoMessage") {
-			continue
-		}
-		stateInfo := peer.StateInfoMessage.GetStateInfo()
-		if !assert.NotNil(t, stateInfo, "got nil stateInfo") {
-			continue
-		}
-		if !assert.NotNil(t, stateInfo.Properties, "got nil stateInfo.Properties") {
-			continue
-		}
-		//fmt.Printf("--- Ledger Height: %d \n", stateInfo.Properties.LedgerHeight)
-		for _, cc := range stateInfo.Properties.Chaincodes {
-			fmt.Printf("------Chaincodes: %s:%s \n", cc.Name, cc.Version)
-		}
-	}
+	dynamicdiscovery.PrintPeerInfo(peers)
 
 }
 
-func TestClient_DiscoveryService_GetCATlsCert(t *testing.T) {
+func TestClient_DiscoveryService_AddConfigQuery(t *testing.T) {
 	os.Setenv("FABRIC_ARTIFACTS", "../../../")
 	err := config.InitConfig(configPath)
 	if err != nil {
@@ -166,18 +129,39 @@ func TestClient_DiscoveryService_GetCATlsCert(t *testing.T) {
 
 	resp := responses[0]
 	chanResp := resp.ForChannel(orgChannelID)
-	//peers, err := chanResp.Peers()
 	configResult , err := chanResp.Config()
-	//chanResp.Endorsers()
 	require.NoError(t, err, "error getting config")
 	require.NotEmpty(t, configResult, "expecting at least one peer but got none")
 
-	for _, tlscert := range configResult.Msps["Org1MSP"].TlsRootCerts {
+	endorsers , err := dynamicdiscovery.GetEndorsers(chCtx, client, peerCfg1.PeerConfig )
 
-		fmt.Printf("==== cert :[%s] \n", string(tlscert))
-	}
+	dynamicdiscovery.PrintConfig(endorsers , configResult)
 
 }
+
+func TestClient_DiscoveryService_AddEndorsersQuery(t *testing.T) {
+	os.Setenv("FABRIC_ARTIFACTS", "../../../")
+	err := config.InitConfig(configPath)
+	if err != nil {
+		t.Error(err)
+	}
+	configProvider := fabcfg.FromFile(config.GetConfigFile())
+	sdk , err := fabsdk.New(configProvider,fabsdk.WithServicePkg(&DynamicDiscoveryProviderFactory{}))
+
+	chProvider := sdk.Context(fabsdk.WithUser("Admin"), fabsdk.WithOrg("Org1"))
+	chCtx, err := chProvider()
+	require.NoError(t, err, "Error creating channel context")
+	var client *discovery.Client
+	client, err = discovery.New(chCtx)
+
+	peerCfg1, err := comm.NetworkPeerConfig(chCtx.EndpointConfig(), "peer0.org1.example.com")
+	require.NoErrorf(t, err, "error getting peer config for [%s]", "peer0.org1.example.com")
+
+	endorsers , err := dynamicdiscovery.GetEndorsers(chCtx,client,peerCfg1.PeerConfig )
+	dynamicdiscovery.PrintPeerInfo(endorsers)
+}
+
+
 
 type DynamicDiscoveryProviderFactory struct {
 	// 外部引用
